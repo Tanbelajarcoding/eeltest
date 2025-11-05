@@ -1,11 +1,9 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as any,
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -54,29 +52,16 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
+        token.id = user.id;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.role = token.role as string;
-        session.user.id = token.sub as string;
+        session.user.id = token.id as string;
       }
       return session;
-    },
-    async redirect({ url, baseUrl }) {
-      // Redirect based on role after login
-      const session = await prisma.user.findFirst({
-        where: { email: url.includes("email") ? url.split("email=")[1] : "" },
-      });
-
-      if (session?.role === "ADMIN") {
-        return `${baseUrl}/admin/dashboard`;
-      } else if (session?.role === "USER") {
-        return `${baseUrl}/user/search`;
-      }
-
-      return baseUrl;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,

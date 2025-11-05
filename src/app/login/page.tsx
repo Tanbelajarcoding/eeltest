@@ -28,13 +28,14 @@ export default function LoginPage() {
 
       if (result?.error) {
         setError("Invalid email or password");
-      } else {
-        router.push("/");
-        router.refresh();
+        setIsLoading(false);
+      } else if (result?.ok) {
+        // Successful login - redirect to home which will handle role-based routing
+        window.location.href = "/";
       }
     } catch (error) {
+      console.error("Login error:", error);
       setError("An error occurred. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };
