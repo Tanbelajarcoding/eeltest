@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String // ADMIN, USER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model FleetType {
+  id           Int       @id @default(autoincrement())
+  name         String    @unique
+  manufacturer String
+  model        String
+  drawings     Drawing[]
+  aircraft     Aircraft[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("fleet_types")
+}
+
+model Drawing {
+  id            Int                 @id @default(autoincrement())
+  drawingNumber String              @unique
+  title         String
+  revision      String
+  diagramImage  String?
+  fleetTypeId   Int
+  fleetType     FleetType           @relation(fields: [fleetTypeId], references: [id])
+  locations     EquipmentLocation[] // Equipment locations on this drawing
+  aircraft      Aircraft[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@map("drawings")
+}
+
+model EquipmentType {
+  id          Int                 @id @default(autoincrement())
+  partNumber  String              @unique
+  description String
+  category    String              // Fire Safety, Medical, Oxygen, etc.
+  locations   EquipmentLocation[] // Where this equipment appears on drawings
+  equipment   AircraftEquipment[] // Actual instances on aircraft
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@map("equipment_types")
+}
+
+// Equipment location on drawing (template - shared across all aircraft)
+model EquipmentLocation {
+  id                   Int                 @id @default(autoincrement())
+  drawingId            Int
+  drawing              Drawing             @relation(fields: [drawingId], references: [id], onDelete: Cascade)
+  equipmentTypeId      Int
+  equipmentType        EquipmentType       @relation(fields: [equipmentTypeId], references: [id])
+  zone                 String?             // Zone/Item number from drawing
+  x                    Float               // X coordinate (percentage)
+  y                    Float               // Y coordinate (percentage)
+  templateFunctionLoc  String?             // Template like "1-{REG}-001"
+  functionLocations    Json?               // Multiple function location formats as JSON array
+  alternatePartNumbers Json?               // Alternate part numbers as JSON array
+  equipment            AircraftEquipment[] // Actual equipment instances
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@map("equipment_locations")
+}
+
+model Aircraft {
+  id             Int                 @id @default(autoincrement())
+  registration   String              @unique
+  msn            String              // Manufacturer Serial Number
+  fleetTypeId    Int
+  fleetType      FleetType           @relation(fields: [fleetTypeId], references: [id])
+  drawingId      Int?
+  drawing        Drawing?            @relation(fields: [drawingId], references: [id])
+  equipment      AircraftEquipment[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@map("aircraft")
+}
+
+// Actual equipment instances on specific aircraft
+model AircraftEquipment {
+  id               Int               @id @default(autoincrement())
+  aircraftId       Int
+  aircraft         Aircraft          @relation(fields: [aircraftId], references: [id], onDelete: Cascade)
+  locationId       Int               // Reference to equipment location on drawing
+  location         EquipmentLocation @relation(fields: [locationId], references: [id])
+  equipmentTypeId  Int
+  equipmentType    EquipmentType     @relation(fields: [equipmentTypeId], references: [id])
+  functionLocation String            // Actual function location like "1-PK-GFR-001"
+  status           String            @default("Active") // Active, Removed, Replaced
+  installDate      DateTime?
+  remarks          String?
+  photo            String?           // Photo path if any
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@map("aircraft_equipment")
+}
