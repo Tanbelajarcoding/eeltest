@@ -20,7 +20,7 @@ export default function AdminDashboard() {
     if (status === "unauthenticated") {
       router.push("/login");
     }
-    if (session && session.user.role !== "ADMIN") {
+    if (session && session.user?.role !== "ADMIN") {
       router.push("/user/search");
     }
   }, [session, status, router]);
