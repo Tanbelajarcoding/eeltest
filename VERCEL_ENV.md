@@ -40,7 +40,27 @@ GMF-EEL-2025-SECRET-KEY-PRODUCTION-SECURE-RANDOM-STRING-FOR-AUTH
 
 Or generate new: https://generate-secret.vercel.app/32
 
-## 5. NODE_ENV
+## 5. NEXT_PUBLIC_SUPABASE_URL
+
+**⚠️ REQUIRED for Supabase Storage (image uploads)!**
+
+Get from: Supabase Dashboard → Project Settings → API → Project URL
+
+```
+https://ljildxhaxtqacahrurng.supabase.co
+```
+
+## 6. NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+**⚠️ REQUIRED for Supabase Storage (image uploads)!**
+
+Get from: Supabase Dashboard → Project Settings → API → Project API keys → `anon` `public`
+
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ey...YOUR_ANON_KEY
+```
+
+## 7. NODE_ENV
 
 ```
 production
@@ -59,6 +79,10 @@ DIRECT_URL=postgresql://postgres.ljildxhaxtqacahrurng:cinabenteng@aws-1-ap-south
 # NextAuth (⚠️ UPDATE THESE!)
 NEXTAUTH_URL=https://YOUR-VERCEL-DOMAIN.vercel.app
 NEXTAUTH_SECRET=GMF-EEL-2025-SECRET-KEY-PRODUCTION-SECURE-RANDOM-STRING-FOR-AUTH
+
+# Supabase Storage (⚠️ GET FROM SUPABASE DASHBOARD!)
+NEXT_PUBLIC_SUPABASE_URL=https://ljildxhaxtqacahrurng.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 
 # Environment
 NODE_ENV=production

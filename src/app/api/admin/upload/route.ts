@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import { existsSync } from "fs";
+import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,30 +34,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create diagrams directory if it doesn't exist
-    const uploadDir = path.join(process.cwd(), "public", "diagrams");
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
-    }
-
     // Generate unique filename
     const timestamp = Date.now();
     const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filename = `${timestamp}-${originalName}`;
-    const filepath = path.join(uploadDir, filename);
 
-    // Convert file to buffer and save
+    // Initialize Supabase client
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json(
+        { error: "Supabase configuration missing" },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filepath, buffer);
 
-    // Return the public URL path
-    const publicPath = `/diagrams/${filename}`;
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from("drawings")
+      .upload(filename, buffer, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (error) {
+      console.error("Supabase upload error:", error);
+      return NextResponse.json(
+        { error: `Upload failed: ${error.message}` },
+        { status: 500 }
+      );
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from("drawings")
+      .getPublicUrl(data.path);
 
     return NextResponse.json({
       success: true,
-      path: publicPath,
+      path: urlData.publicUrl,
       filename: filename,
+      storage: "supabase",
     });
   } catch (error) {
     console.error("Error uploading file:", error);
