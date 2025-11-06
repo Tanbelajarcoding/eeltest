@@ -176,10 +176,14 @@ export async function PATCH(
     }
 
     return NextResponse.json(drawing);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating drawing:", error);
     return NextResponse.json(
-      { error: "Failed to update drawing" },
+      {
+        error: "Failed to update drawing",
+        details: error.message || error,
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+      },
       { status: 500 }
     );
   }

@@ -82,7 +82,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#006298] focus:border-transparent transition-all text-gray-900 placeholder:text-gray-400"
-                  placeholder="your.email@gmf-aeroasia.co.id"
+                  placeholder="your.email@gmf.co.id"
                 />
               </div>
 
@@ -128,14 +128,6 @@ export default function LoginPage() {
                 {isLoading ? "Signing in..." : "Sign In"}
               </button>
             </form>
-
-            <div className="mt-6 text-center text-sm text-gray-500">
-              Demo Credentials:
-              <br />
-              Admin: admin@gmf.co.id / admin123
-              <br />
-              User: user@gmf.co.id / user123
-            </div>
           </div>
         </div>
       </div>
