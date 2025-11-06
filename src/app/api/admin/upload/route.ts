@@ -40,12 +40,19 @@ export async function POST(request: NextRequest) {
     const filename = `${timestamp}-${originalName}`;
 
     // Initialize Supabase client
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
+      console.error("Missing Supabase config:", { 
+        hasUrl: !!supabaseUrl, 
+        hasKey: !!supabaseKey 
+      });
       return NextResponse.json(
-        { error: "Supabase configuration missing" },
+        { 
+          error: "Supabase configuration missing. Please check environment variables.",
+          details: "NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set"
+        },
         { status: 500 }
       );
     }
@@ -66,8 +73,35 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Supabase upload error:", error);
+      
+      // Provide helpful error messages
+      if (error.message.includes("not found") || error.message.includes("Bucket")) {
+        return NextResponse.json(
+          { 
+            error: "Storage bucket 'drawings' not found",
+            details: "Please create a public bucket named 'drawings' in Supabase Storage",
+            supabaseError: error.message
+          },
+          { status: 500 }
+        );
+      }
+      
+      if (error.message.includes("policy")) {
+        return NextResponse.json(
+          { 
+            error: "Storage access denied",
+            details: "Please check bucket policies in Supabase Storage. Bucket must be public or have appropriate RLS policies.",
+            supabaseError: error.message
+          },
+          { status: 500 }
+        );
+      }
+
       return NextResponse.json(
-        { error: `Upload failed: ${error.message}` },
+        { 
+          error: `Upload failed: ${error.message}`,
+          details: error
+        },
         { status: 500 }
       );
     }
@@ -83,10 +117,13 @@ export async function POST(request: NextRequest) {
       filename: filename,
       storage: "supabase",
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error uploading file:", error);
     return NextResponse.json(
-      { error: "Failed to upload file" },
+      { 
+        error: "Failed to upload file",
+        details: error.message || error
+      },
       { status: 500 }
     );
   }
